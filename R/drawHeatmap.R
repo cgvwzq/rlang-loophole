@@ -17,10 +17,10 @@
 drawHeatmap = function(filesPath,
                        webpages = 'all',
                        showPercentages = F,
-                       P = 20,
+                       P = 5,
                        windowType = 'sakoechiba',
                        windowSize = 100,
-                       maxLength = 4000,
+                       maxLength = 1000,
                        sampFun = 'sum',
                        stepPattern = 'symmetric1',
                        pathOut,
@@ -44,23 +44,25 @@ drawHeatmap = function(filesPath,
       
       cols <- paste0(tmp[1], '.json')
       rows <- paste0(tmp[2], '.json')
-        
+
       aux <- readRDS(paste0(filesPath, file))
-
-      if (webpages == 'all')
+      
+      if (length(webpages) == 1)
       {
-        webpages <- as.list(rownames(aux))
+        if (webpages == 'all')
+        {
+          webpages <- stringr::str_replace(rownames(aux), '_[0-9]+\\.json$', '')
+        }
       }
-
+      
       aux <- aux[which(rownames(aux) %in% paste(webpages, rows, sep = '_')), which(colnames(aux) %in% paste(webpages, cols, sep = '_'))]
-        
+      
       #1 for the assigned 1NN, 0 otherwise
       for (row in 1:nrow(aux)){
         aux[row,][aux[row,]!=min(aux[row,])] <- 0
       }
 
       m <- m + (aux > 0)
-         
       countIter <- countIter+1
     }
 
@@ -74,10 +76,13 @@ drawHeatmap = function(filesPath,
   {
     m <- readRDS(matrixFilename)
   }
-
-  if (webpages == 'all')
+  
+  if (length(webpages) == 1)
   {
-    webpages <- as.list(rownames(m))
+    if (webpages == 'all')
+    {
+      webpages <- as.list(rownames(m))
+    }
   }
 
   if (showPercentages)
@@ -99,7 +104,7 @@ drawHeatmap = function(filesPath,
   txt <- matrix(as.character(round(m*100)/100), nrow(m))
   txt[txt=='0'] <- NA
 
-  svg(paste0(pathOut, heatmapFileName, '.svg'))
+  pdf(paste0(pathOut, heatmapFileName, '.pdf'))
   hm1 <- heatmap.2(m,
                  Rowv = FALSE, Colv = FALSE, dendrogram = 'none',
                  breaks = brks,
@@ -111,8 +116,8 @@ drawHeatmap = function(filesPath,
                  margins = c(5,5),
                  offsetRow = 1, offsetCol = 1,
                  key = FALSE,
-                 labRow = FALSE,
-                 labCol = stringr::str_replace(rownames(m), '_[0-9]+\\.json', ''),
+                 labCol = FALSE,
+                 labRow = stringr::str_replace(rownames(m), '_[0-9]+\\.json', ''),
                  lmat = rbind(c(5,4,2), c(6,1,3)), lhei = c(1,5), lwid = c(1,7,1))
 
   dev.off()
