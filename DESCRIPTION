@@ -1,0 +1,24 @@
+Package: loophole
+Title: Manage traces, timeseries, and classification for timing data extracted
+    with Loophole
+Version: 0.0.0.9000
+Authors@R: person("Pepe", "Vila", email = "pvtolkien@gmail.com", role = c("aut", "cre"))
+Description: Manage traces, timeseries, and classification for timing data
+    extracted with Loophole
+Depends:
+    R (>= 3.3.2)
+License: GPL-3
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 5.0.1
+Imports:
+    jsonlite,
+    dtw,
+    bigmemory,
+    biganalytics,
+    stringr,
+    foreach,
+    parallel,
+    doParallel,
+    ggplot2,
+    gridExtra
