@@ -10,7 +10,7 @@
 paintMultiTraces <- function(traces) {
 
     xmax <- max(sapply(traces, function(i) max(i$timestamp)))
-    ymax <- max(sapply(traces, function(i) max(i$diff)))
+    ymax <- max(sapply(traces, function(i) max(i$delay)))
 
     colors <- rainbow(length(traces))
 

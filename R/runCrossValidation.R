@@ -1,80 +1,100 @@
-#' generateTuningDatabases
+#' runCrossValidation
 #'
-#' Creates databases of timeseries for all combinations of parameters
-#' @param inPath Path with databases of timeseries.
-#' @param N Number of rounds with 1 dataset as ref and 1 as test.
-#' @return Data frame average results.
+#' Runs an N-fold cross validation with m test samples per round for all possible combinations of parameters
+#' @param inPath Path containing timeseries databases.
+#' @param windowTypes Window types.
+#' @param stepPatterns Step patterns.
+#' @param windowSizes Window sizes.
+#' @param P Time averaging parameter.
+#' @param maxLength Maximum trace length
+#' @param sampFun Sampling function.
+#' @param N Number of cross validation rounds - one per reference sample.
+#' @param m Number of test samples per round.
+#' @param logFile Log file, defaults to NA.
+#' @return results Summary table with performance for each combination of
+#' parameters.
 #' @export
 #' @examples
-#' executeTuning("dbs/")
+#' runCrossValidation('dbs/')
 
-executeTuning <- function(inPath, logFile=NA) {
+runCrossValidation <- function(inPath,
+                               windowTypes = c('sakoechiba', 'slantedband', 'itakura'),
+                               stepPatterns = c('symmetric1', 'symmetric2', 'asymmetric'),
+                               windowSizes = c(1, 5, 10, 20, 50, 100),
+                               P = c(1, 2, 5, 10, 20, 50),
+                               maxLength = c(1000, 2000, 3000, 4000),
+                               sampFun = c('sum', 'max'),
+                               N, m,
+                               logFile = NA){
+  
+  results <- data.frame(maxLength = NULL, P = NULL, sampFun = NULL, windowType = NULL, stepPattern = NULL,
+                        windowSize = NULL, tolerance = NULL, rate = NULL)
+  
+  parameters <- as.data.frame(expand.grid(windowType = windowTypes,
+                                             stepPattern = stepPatterns,
+                                             windowSize = windowSizes,
+                                             P = P, maxLength = maxLength, sampFun = sampFun))
+
+ # parameters <- parameters[-which(parameters$windowType == 'itakura' & parameters$windowSize != 100),]
+
+  for (p in 1:nrow(parameters)){
+    conf <- parameters[p,]
+    perf <- executeCrossValidation(inPath, conf, N, m, logFile)
+
+    for (tol in names(perf)){
+      results <- rbind(results, data.frame(maxLength = conf$maxLength, P = conf$P, sampFun = conf$sampFun,
+                                           windowType = conf$windowType, stepPattern = conf$stepPattern,
+                                           windowSize = conf$windowSize, tolerance = as.numeric(tol),
+                                           rate = perf[tol]))
+    }
+  }
+  return(results)
+}
+
+
+#' executeCrossValidation
+#'
+#' Executes N-fold cross validation with m tests per round for a fixed set of DTW parameters
+#' @param conf DTW parameters including step pattern and window type & size.
+#' @param N Number of rounds in the cross validation.
+#' @param m Number of test samples per round.
+#' @param logFile Name of log file, defaults to NA
+#' @return perf Performance vector averaged over all m*N classifications.
+
+executeCrossValidation <- function(inPath, conf, N, m, logFile=NA) {
 
     # Copy all output into a log file
     if (!is.na(logFile)) {
-        sink(logFile, split = TRUE) 
+     #   sink(logFile, split = TRUE)
     }
 
-    # Build table of results
-    results <- NULL
-
     # Get dbs of timeseries
-    dbs <- list.files(inPath, pattern="\\.db$")
-
+    dbs <- list.files(inPath, pattern=paste0("\\.db$"))
+    
     # Creates directory for temp cross distance matrix
     suppressWarnings(dir.create(paste(inPath, "crossMatrices", sep="")))
-
+    
     # For each different type of time series
     for (dbname in dbs) {
-
+     
         # Extract db parameters
         tsParameters <- parseDatabaseFilename(dbname)
 
         # Load db
-        print(paste("Loading ", inPath, dbname, sep=""))
+        print(paste("Loading ", inPath, dbname, sep=""), quote = F)
         db <- readRDS(paste(inPath, dbname, sep=""))
 
-        # Set all DTW parameters for tuning
-        pWindowTypes <- c("sakoechiba", "slantedband")
-        pStepPatterns <- c("symmetric1", 'symmetric2')
-        pWindowSizes <- c(1, 5, 10)
-        dtwParameters <- as.data.frame(expand.grid(windowType=pWindowTypes,
-                                                   stepPattern=pStepPatterns,
-                                                   windowSize=pWindowSizes))
-        # Remove invalid ones (itakura window sizes)
-        dtwParameters <- dtwParameters[-which(dtwParameters$windowType == "itakura" 
-                                              & dtwParameters$windowSize != 1),]
+        # Print parameters
+        print(paste("Conf:", printConfigData(conf)), quote = F)
 
-        # For each configuration of DTW
-        for (p in 1:nrow(dtwParameters)) {
-
-            conf <- dtwParameters[p,] # windowType, stepPattern, windowSize
-            conf$P <- tsParameters$P
-            conf$maxLength <- tsParameters$maxLength
-            conf$sampFun <- tsParameters$sampFun
-
-            # Print parameters 
-            print(paste("Conf:", printConfigData(conf)))
-
-            # Calculates rounds of DTW with given config
-            perf <- calculatePerformance(db, conf, 3, paste(inPath, "crossMatrices/", sep=""))
-
-            # Store results 
-            for (p in names(perf)) {
-                results <- rbind(results, data.frame(maxLength=conf$maxLength, P=conf$P, sampFun=conf$sampFun,
-                                                 windowType=conf$windowType,stepPattern=conf$stepPattern,
-                                                 windowSize=conf$windowSize, tolerance=as.numeric(p), rate=perf[p]))
-            } 
-            
-            # Print perforamnce
-            print(paste("Performance: ", paste(perf, collapse=" ")))
-            print("=============")
-
-        }
-
+        # Calculates rounds of DTW with given config
+        perf <- calculatePerformance(db, conf, N, m, paste(inPath, "crossMatrices/", sep=""))
+        print(perf)
+        # Print perforamnce
+        print(paste("Performance: ", paste(perf, collapse=" ")), quote = F)
+        print("=============", quote = F)
     }
-
-    return(results)
+    return(perf)
 
 }
 
@@ -103,9 +123,11 @@ parseDatabaseFilename <- function(name) {
 #' @export
 printConfigData <- function(conf) {
 
-    return(paste("window=", conf$windowType, "|step=", conf$stepPattern,
-          "|size=", conf$windowSize, "|P=", conf$P, "|length=", conf$maxLength,
-          sep=""))
+    return(paste0("window - ", conf$windowType,
+                 " | step - ", conf$stepPattern,
+                 " | size - ", conf$windowSize,
+                 " | P - ", conf$P,
+                 " | length - ", conf$maxLength))
 
 }
 
@@ -114,50 +136,53 @@ printConfigData <- function(conf) {
 #' Calculates aprox. matching rate for given a database and configuration
 #' @param db Database of timeseries.
 #' @param conf Configuration for DTW algorithm as a data.frame row.
-#' @param N Number of rounds with 1 set as ref and 1 as test. Defaults to 3.
+#' @param N Number of rounds, with one different reference set each round.
+#' @param m Number of test sets per round.
 #' @param keepMatrices Save intermediate cross DTW matrices in files. Defaults to NA. 
 #' @return Average matching rate after N rounds.
 #' @export
 #' @examples
 #' calculatePerformance(db, conf, keepMatrices="dbs/crossMatrices/")
 
-calculatePerformance <- function(db, conf, N=3, keepMatrices=NA) {
+calculatePerformance <- function(db, conf, N=10, m=3, keepMatrices=NA) {
 
     tmp <- names(db)[[1]]
     pattern <- stringr::str_replace(tmp, "_[0-9]+\\.json$", "")
     tmp <- names(db[grepl(pattern, names(db))])
     sets <- as.numeric(stringr::str_match(tmp, "_([0-9]+)\\.json")[,2])
 
-    N <- min(N, floor(length(sets)/2)) # use N or max number of samples
-
-    # Use N*2 random samples for tuning
+    # Select N references
     set.seed(42) # use same samples for every calculations
-    randSamples <- sample(sets, N*2, replace=FALSE)
+    randSamples <- sample(sets, N, replace=FALSE)
 
     # Performance per round (2 times beacuse asymetry)
-    performance <- matrix(ncol=5, nrow=N, dimnames=list(NULL, c("1","3","5","10","30")))
+    performance <- matrix(0, ncol=5, nrow=N, dimnames=list(NULL, c("1","3","5","10","30")))
 
     # Do N rounds
     for (k in 1:N) {
 
         print(paste("Round: ", k, "/", N, sep=""))
+        
+        r <- randSamples[k] # reference sample
+        ref <- db[grepl(paste("_", r, "\\.json$", sep=""), names(db))]
+        
+        set.seed(k) # change test sets each round
+        tSamples <- sample(sets[sets!=sets[k]], m, replace = FALSE) # test samples
 
-        t <- randSamples[k]
-        r <- randSamples[k+N]
+        for (t in tSamples){
+          # Database timeseries names have the format 'webpage_k.json' (k in [0:14])
+          test <- db[grepl(paste("_", t,"\\.json$", sep=""), names(db))]
 
-        # Database timeseries names have the format 'webpage_k.json' (k in [0:14])
-        test <- db[grepl(paste("_", r,"\\.json$", sep=""), names(db))]
-        ref <- db[grepl(paste("_", t, "\\.json$", sep=""), names(db))]
+          # Compute cross DTW matrix for each configuration and pair of test/ref
+          crossDTWmatrix <- dtwDistParallel(test, ref, conf, paste(r,t,sep="-"), output=keepMatrices)
 
-        # Compute cross DTW matrix for each configuration and pair of test/ref
-        crossDTWmatrix <- dtwDistParallel(test, ref, conf, paste(r,t,sep="-"), output=keepMatrices)
-
-        # Calculate matching rate 
-        performance[k,] <- recognitionRate(crossDTWmatrix)
-
+          # Calculate matching rate 
+          performance[k,] <- performance[k,] + recognitionRate(crossDTWmatrix)
+        }
+        performance[k,] <- performance[k,]/m # performance averaged over the m tests
     }
 
-    return(colMeans(performance))
+    return(colMeans(performance)) # performance averaged over the N rounds/refs
 
 }
 

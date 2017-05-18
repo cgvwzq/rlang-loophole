@@ -16,8 +16,12 @@ generateTuningDatabases <- function(inPath, outPath, RL, RP, RF) {
     for (maxLength in RL) {
 
         parameters <- as.data.frame(expand.grid(RP=RP, RF=RF))
-
-        tmp <- createTraceDatabase(inPath, outPath, maxLength=maxLength)
+print('a')
+        tmp <- list.files(outPath, pattern = '.dat$')
+        print(tmp)
+        if (length(tmp) == 0){
+          tmp <- createTraceDatabase(inPath, outPath, maxLength=maxLength)
+        }
 
         print(parameters)
 

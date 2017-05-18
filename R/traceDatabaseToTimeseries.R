@@ -25,9 +25,10 @@ traceDatabaseToTimeseries <- function(traceDatabase, P = 20, samplingFun = sum, 
 
         tmp <- foreach::foreach(tr=trace, .inorder=TRUE) %dopar% {
 
-            # Add timeseries to db
+          # Add timeseries to db
+          if (nrow(tr)>0){  
             traceToTimeseries(tr, P=P, samplingFun=samplingFun)
-
+          }
         }
 
         # Unregister parallel support
