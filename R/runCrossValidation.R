@@ -88,7 +88,7 @@ executeCrossValidation <- function(inPath, conf, N, m, logFile=NA) {
         print(paste("Conf:", printConfigData(conf)), quote = F)
 
         # Calculates rounds of DTW with given config
-        perf <- calculatePerformance(db, conf, N, m, paste(inPath, "crossMatrices/", sep=""))
+        perf <- calculatePerformanceCross(db, conf, N, m, paste(inPath, "crossMatrices/", sep=""))
         print(perf)
         # Print perforamnce
         print(paste("Performance: ", paste(perf, collapse=" ")), quote = F)
@@ -131,7 +131,7 @@ printConfigData <- function(conf) {
 
 }
 
-#' calculatePerformance
+#' calculatePerformanceCross
 #'
 #' Calculates aprox. matching rate for given a database and configuration
 #' @param db Database of timeseries.
@@ -142,9 +142,9 @@ printConfigData <- function(conf) {
 #' @return Average matching rate after N rounds.
 #' @export
 #' @examples
-#' calculatePerformance(db, conf, keepMatrices="dbs/crossMatrices/")
+#' calculatePerformanceCross(db, conf, keepMatrices="dbs/crossMatrices/")
 
-calculatePerformance <- function(db, conf, N=10, m=3, keepMatrices=NA) {
+calculatePerformanceCross <- function(db, conf, N=10, m=3, keepMatrices=NA) {
 
     tmp <- names(db)[[1]]
     pattern <- stringr::str_replace(tmp, "_[0-9]+\\.json$", "")
