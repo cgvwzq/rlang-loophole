@@ -18,4 +18,3 @@ Load DB from 'file'
 \examples{
 loadRawDatabase("data/test.dat")
 }
-

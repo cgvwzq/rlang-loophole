@@ -18,4 +18,3 @@ Converts a vector of timestamps 'trace' into a data.frame (timestamp/delay)
 \examples{
 parseTrace("db$example_0.json")
 }
-

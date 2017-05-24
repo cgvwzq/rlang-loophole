@@ -22,4 +22,3 @@ This function converts a raw Trace of time delays into a Timeserie sampling inte
 \examples{
 traceToTimseries(trace, P=20)
 }
-

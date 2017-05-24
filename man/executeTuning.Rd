@@ -20,4 +20,3 @@ Creates databases of timeseries for all combinations of parameters
 \examples{
 executeTuning("dbs/")
 }
-

@@ -18,4 +18,3 @@ Generates a graphic with several timeseries using grid.arrange
 \examples{
 paintTimeseriesList(list(ts1, ts2, ts3))
 }
-

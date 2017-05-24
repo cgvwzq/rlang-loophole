@@ -22,4 +22,3 @@ Lists all files in 'inPath' and generates a list of vectors of delays
 \examples{
 createRawDatabase("data/", "test.dat")
 }
-

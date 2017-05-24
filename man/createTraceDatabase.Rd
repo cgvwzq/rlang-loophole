@@ -22,4 +22,3 @@ Lists all files in 'inPath' and generates a list of data.frames (timestamp/delay
 \examples{
 createTraceDatabase("data/", "traces/")
 }
-

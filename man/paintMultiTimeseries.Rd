@@ -18,4 +18,3 @@ Draws a line plot from several timeseries.
 \examples{
 paintMultiTimseries(list(ts1, ts2, ts3))
 }
-

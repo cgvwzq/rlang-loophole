@@ -18,4 +18,3 @@ Generates a graphic with several traces using grid.arrange
 \examples{
 paintTracesList(list(tr1, tr2, tr3))
 }
-

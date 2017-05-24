@@ -25,4 +25,3 @@ Converts a list of data.frames (timestamp/delay) into a list of timeseries
 \examples{
 traceDatabaseToTimeseries(db, P=20, samplingFun=sum) 
 }
-

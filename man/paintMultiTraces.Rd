@@ -18,4 +18,3 @@ Draws a line plot from several traces.
 \examples{
 paintMultiTraces(list(tr1, tr2, tr3))
 }
-

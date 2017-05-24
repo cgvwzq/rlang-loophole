@@ -26,4 +26,3 @@ Creates databases of timeseries for all combinations of parameters
 \examples{
 generateTuningDatabases("data/", "dbs/", RL=c(4000,2000,1000), RP=c(50,20,10,5), RF=c("sum"))
 }
-

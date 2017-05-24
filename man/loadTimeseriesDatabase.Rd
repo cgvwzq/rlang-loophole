@@ -18,4 +18,3 @@ Load DB from 'file'
 \examples{
 loadTimeseriesDatabase("data/test.dat")
 }
-

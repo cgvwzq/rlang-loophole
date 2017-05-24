@@ -18,4 +18,3 @@ Load trace DB from path
 \examples{
 loadTraceDatabase("traces/traces_5_4000.dat")
 }
-
