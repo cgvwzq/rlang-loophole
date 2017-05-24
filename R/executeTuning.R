@@ -35,9 +35,9 @@ executeTuning <- function(inPath, logFile=NA) {
         db <- readRDS(paste(inPath, dbname, sep=""))
 
         # Set all DTW parameters for tuning
-        pWindowTypes <- c("sakoechiba", "slantedband")
-        pStepPatterns <- c("symmetric1", 'symmetric2')
-        pWindowSizes <- c(1, 5, 10)
+		pWindowTypes <- c("itakura", "sakoechiba")
+		pStepPatterns <- c("symmetric1", "symmetric2", "asymmetric")
+		pWindowSizes <- c(1, 5, 10, 30, 50, 100)
         dtwParameters <- as.data.frame(expand.grid(windowType=pWindowTypes,
                                                    stepPattern=pStepPatterns,
                                                    windowSize=pWindowSizes))
